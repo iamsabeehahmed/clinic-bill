@@ -14,7 +14,6 @@ import {
   ArrowDownRight,
   Receipt,
   CreditCard,
-  Calendar,
   Activity,
   Printer,
 } from 'lucide-react';
@@ -27,7 +26,7 @@ interface Stats {
   monthlyRevenue: number;
   lastMonthRevenue: number;
   todayBills: number;
-  pendingAmount: number;
+  todayRevenue: number;
   totalPaidAmount: number;
   totalPatients: number;
   monthlyBills: number;
@@ -46,7 +45,7 @@ export default function Dashboard() {
     monthlyRevenue: 0,
     lastMonthRevenue: 0,
     todayBills: 0,
-    pendingAmount: 0,
+    todayRevenue: 0,
     totalPaidAmount: 0,
     totalPatients: 0,
     monthlyBills: 0,
@@ -73,7 +72,7 @@ export default function Dashboard() {
           monthlyRevenue: data.monthlyRevenue ?? 0,
           lastMonthRevenue: data.lastMonthRevenue ?? 0,
           todayBills: data.todayBills ?? 0,
-          pendingAmount: data.pendingAmount ?? 0,
+          todayRevenue: data.todayRevenue ?? 0,
           totalPaidAmount: data.totalPaidAmount ?? 0,
           totalPatients: data.totalPatients ?? 0,
           monthlyBills: data.monthlyBills ?? 0,
@@ -92,177 +91,185 @@ export default function Dashboard() {
   const userRole = session?.user?.role || 'patient';
   const userName = session?.user?.name || 'User';
 
-  // Admin/Employee Dashboard
   if (userRole === 'admin' || userRole === 'employee') {
-    return (
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, <span className="text-emerald-600">{userName.split(' ')[0]}</span>
-            </h1>
-            <p className="text-gray-500 mt-1">Here&apos;s what&apos;s happening with your clinic today.</p>
+    return <AdminDashboard stats={stats} loading={loading} userName={userName} />;
+  }
+
+  return <PatientDashboard stats={stats} userName={userName} />;
+}
+
+// Admin/Employee Dashboard
+function AdminDashboard({ stats, loading, userName }: { readonly stats: Stats; readonly loading: boolean; readonly userName: string }) {
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, <span className="text-emerald-600">{userName.split(' ')[0]}</span>
+          </h1>
+          <p className="text-gray-500 mt-1">Here&apos;s what&apos;s happening with your clinic today.</p>
+        </div>
+        <Link
+          href="/bills/new"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          New Bill
+        </Link>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Revenue"
+          value={`Rs. ${(stats.totalRevenue || 0).toLocaleString()}`}
+          change={`${stats.revenueChange >= 0 ? '+' : ''}${stats.revenueChange}% this month`}
+          trend={stats.revenueChange >= 0 ? 'up' : 'down'}
+          icon={Banknote}
+          color="emerald"
+          loading={loading}
+        />
+        <StatCard
+          title="Total Bills"
+          value={stats.totalBills}
+          change={`${stats.todayBills} today`}
+          trend="neutral"
+          icon={FileText}
+          color="blue"
+          loading={loading}
+        />
+        <StatCard
+          title="Today's Collection"
+          value={`Rs. ${(stats.todayRevenue || 0).toLocaleString()}`}
+          change={`${stats.todayBills} bill${stats.todayBills === 1 ? '' : 's'} today`}
+          trend={stats.todayRevenue > 0 ? 'up' : 'neutral'}
+          icon={Banknote}
+          color="amber"
+          loading={loading}
+        />
+        <StatCard
+          title="Total Patients"
+          value={stats.totalPatients}
+          change={`${stats.paidBills} paid bills`}
+          trend="up"
+          icon={Users}
+          color="purple"
+          loading={loading}
+        />
+      </div>
+
+      {/* Quick Actions & Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Actions */}
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="space-y-3">
+            <QuickAction
+              href="/bills/new"
+              icon={Plus}
+              label="Create New Bill"
+              description="Generate a bill for a patient"
+              color="emerald"
+            />
+            <QuickAction
+              href="/patients"
+              icon={Users}
+              label="Add Patient"
+              description="Register a new patient"
+              color="blue"
+            />
+            <QuickAction
+              href="/bills?status=pending"
+              icon={Clock}
+              label="Unpaid Bills"
+              description="View bills awaiting payment"
+              color="amber"
+            />
+            <QuickAction
+              href="#"
+              icon={Printer}
+              label="Print Reports"
+              description="Generate daily reports"
+              color="purple"
+            />
           </div>
-          <Link
-            href="/bills/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            New Bill
-          </Link>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Revenue"
-            value={`Rs. ${(stats.totalRevenue || 0).toLocaleString()}`}
-            change={`${stats.revenueChange >= 0 ? '+' : ''}${stats.revenueChange}% this month`}
-            trend={stats.revenueChange >= 0 ? 'up' : 'down'}
-            icon={Banknote}
-            color="emerald"
-            loading={loading}
-          />
-          <StatCard
-            title="Total Bills"
-            value={stats.totalBills}
-            change={`${stats.todayBills} today`}
-            trend="neutral"
-            icon={FileText}
-            color="blue"
-            loading={loading}
-          />
-          <StatCard
-            title="Pending Amount"
-            value={`Rs. ${(stats.pendingAmount || 0).toLocaleString()}`}
-            change={`${stats.pendingBills} bills pending`}
-            trend={stats.pendingBills > 0 ? 'down' : 'neutral'}
-            icon={Clock}
-            color="amber"
-            loading={loading}
-          />
-          <StatCard
-            title="Total Patients"
-            value={stats.totalPatients}
-            change={`${stats.paidBills} paid bills`}
-            trend="up"
-            icon={Users}
-            color="purple"
-            loading={loading}
-          />
-        </div>
-
-        {/* Quick Actions & Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Actions */}
-          <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <QuickAction
-                href="/bills/new"
-                icon={Plus}
-                label="Create New Bill"
-                description="Generate a bill for a patient"
-                color="emerald"
-              />
-              <QuickAction
-                href="/patients"
-                icon={Users}
-                label="Add Patient"
-                description="Register a new patient"
-                color="blue"
-              />
-              <QuickAction
-                href="/bills?status=pending"
-                icon={Clock}
-                label="Pending Bills"
-                description="View unpaid invoices"
-                color="amber"
-              />
-              <QuickAction
-                href="#"
-                icon={Printer}
-                label="Print Reports"
-                description="Generate daily reports"
-                color="purple"
-              />
-            </div>
+        {/* Monthly Overview */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Monthly Overview</h2>
+            <select className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option>This Month</option>
+              <option>Last Month</option>
+              <option>Last 3 Months</option>
+            </select>
           </div>
 
-          {/* Monthly Overview */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Monthly Overview</h2>
-              <select className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option>This Month</option>
-                <option>Last Month</option>
-                <option>Last 3 Months</option>
-              </select>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-emerald-500 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-emerald-700">Monthly Revenue</span>
+              </div>
+              <p className="text-3xl font-bold text-emerald-900">
+                Rs. {(stats.monthlyRevenue || 0).toLocaleString()}
+              </p>
+              <p className={`text-sm mt-1 ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {stats.revenueChange >= 0 ? '+' : ''}{stats.revenueChange}% from last month
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-emerald-500 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-emerald-700">Monthly Revenue</span>
+            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-500 rounded-lg">
+                  <Activity className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-emerald-900">
-                  Rs. {(stats.monthlyRevenue || 0).toLocaleString()}
-                </p>
-                <p className={`text-sm mt-1 ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {stats.revenueChange >= 0 ? '+' : ''}{stats.revenueChange}% from last month
-                </p>
+                <span className="text-sm font-medium text-blue-700">Bills This Month</span>
               </div>
+              <p className="text-3xl font-bold text-blue-900">{stats.monthlyBills}</p>
+              <p className={`text-sm mt-1 ${stats.billsChange >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                {stats.billsChange >= 0 ? '+' : ''}{stats.billsChange}% from last month
+              </p>
+            </div>
 
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-blue-500 rounded-lg">
-                    <Activity className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-blue-700">Bills This Month</span>
+            <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-amber-500 rounded-lg">
+                  <Banknote className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-blue-900">{stats.monthlyBills}</p>
-                <p className={`text-sm mt-1 ${stats.billsChange >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  {stats.billsChange >= 0 ? '+' : ''}{stats.billsChange}% from last month
-                </p>
+                <span className="text-sm font-medium text-amber-700">Today&apos;s Collection</span>
               </div>
+              <p className="text-3xl font-bold text-amber-900">
+                Rs. {(stats.todayRevenue || 0).toLocaleString()}
+              </p>
+              <p className="text-sm text-amber-600 mt-1">{stats.todayBills} bill{stats.todayBills === 1 ? '' : 's'} today</p>
+            </div>
 
-              <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-amber-500 rounded-lg">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-amber-700">Pending Amount</span>
+            <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <Receipt className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-amber-900">
-                  Rs. {(stats.pendingAmount || 0).toLocaleString()}
-                </p>
-                <p className="text-sm text-amber-600 mt-1">{stats.pendingBills} invoices pending</p>
+                <span className="text-sm font-medium text-purple-700">Collection Rate</span>
               </div>
-
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-purple-500 rounded-lg">
-                    <Receipt className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-purple-700">Collection Rate</span>
-                </div>
-                <p className="text-3xl font-bold text-purple-900">
-                  {stats.totalBills > 0 ? Math.round((stats.paidBills / stats.totalBills) * 100) : 0}%
-                </p>
-                <p className="text-sm text-purple-600 mt-1">{stats.paidBills} of {stats.totalBills} bills paid</p>
-              </div>
+              <p className="text-3xl font-bold text-purple-900">
+                {stats.totalBills > 0 ? Math.round((stats.paidBills / stats.totalBills) * 100) : 0}%
+              </p>
+              <p className="text-sm text-purple-600 mt-1">{stats.paidBills} of {stats.totalBills} bills paid</p>
             </div>
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  // Patient Dashboard
+// Patient Dashboard
+function PatientDashboard({ stats, userName }: { readonly stats: Stats; readonly userName: string }) {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -287,11 +294,11 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-amber-100 rounded-xl">
-              <Clock className="w-6 h-6 text-amber-600" />
+              <Receipt className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Pending Payments</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pendingBills}</p>
+              <p className="text-sm text-gray-500">Paid Bills</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.paidBills}</p>
             </div>
           </div>
         </div>
@@ -365,13 +372,6 @@ function StatCard({
     blue: 'from-blue-500 to-indigo-500',
     amber: 'from-amber-500 to-orange-500',
     purple: 'from-purple-500 to-pink-500',
-  };
-
-  const bgColors = {
-    emerald: 'bg-emerald-50',
-    blue: 'bg-blue-50',
-    amber: 'bg-amber-50',
-    purple: 'bg-purple-50',
   };
 
   return (

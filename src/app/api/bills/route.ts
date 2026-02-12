@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(bills);
   } catch (error) {
+    console.error('Error fetching bills:', error);
     return NextResponse.json({ error: 'Failed to fetch bills' }, { status: 500 });
   }
 }
@@ -51,17 +52,24 @@ export async function POST(request: NextRequest) {
     const discount = body.discount || 0;
     const totalAmount = subtotal + tax - discount;
 
+    // Build bill data — always mark as paid (cash) on creation
+    const { status: _s, paidAmount: _p, payments: _pay, ...safeBody } = body;
     const billData = {
-      ...body,
+      ...safeBody,
       items: body.items.map((item: { quantity: number; unitPrice: number }) => ({
         ...item,
         amount: item.quantity * item.unitPrice,
       })),
       subtotal,
       totalAmount,
-      status: 'pending',
-      paidAmount: 0,
-      payments: [],
+      status: 'paid',
+      paidAmount: totalAmount,
+      dueDate: new Date(),
+      payments: [{
+        amount: totalAmount,
+        method: 'cash',
+        date: new Date(),
+      }],
     };
 
     const bill = await Bill.create(billData);

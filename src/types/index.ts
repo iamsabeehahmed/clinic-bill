@@ -35,7 +35,7 @@ export interface Bill {
   status: 'pending' | 'partial' | 'paid' | 'cancelled';
   payments: Payment[];
   notes?: string;
-  dueDate: string;
+  dueDate?: string;
   createdAt: string;
   updatedAt: string;
 }

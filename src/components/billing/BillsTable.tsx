@@ -196,7 +196,7 @@ export default function BillsTable({ initialBills }: BillsTableProps) {
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               options={[
                 { value: 'all', label: 'All Status' },
-                { value: 'pending', label: 'Pending' },
+                { value: 'pending', label: 'Unpaid' },
                 { value: 'partial', label: 'Partial' },
                 { value: 'paid', label: 'Paid' },
                 { value: 'cancelled', label: 'Cancelled' },

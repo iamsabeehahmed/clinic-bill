@@ -26,7 +26,7 @@ export interface IBill extends Document {
   status: 'pending' | 'partial' | 'paid' | 'cancelled';
   payments: IPayment[];
   notes?: string;
-  dueDate: Date;
+  dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,7 +57,7 @@ const BillSchema = new Schema<IBill>({
   status: { type: String, enum: ['pending', 'partial', 'paid', 'cancelled'], default: 'pending' },
   payments: [PaymentSchema],
   notes: { type: String },
-  dueDate: { type: Date, required: true },
+  dueDate: { type: Date, default: Date.now },
 }, {
   timestamps: true,
 });

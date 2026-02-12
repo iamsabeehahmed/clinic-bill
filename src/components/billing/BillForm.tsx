@@ -13,8 +13,8 @@ function PatientSearchDropdown({
   selectedPatient,
   onSelect,
 }: {
-  selectedPatient: Patient | null;
-  onSelect: (patient: Patient | null) => void;
+  readonly selectedPatient: Patient | null;
+  readonly onSelect: (patient: Patient | null) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -87,13 +87,14 @@ function PatientSearchDropdown({
 
   return (
     <div className="w-full" ref={dropdownRef}>
-      <label className="block text-sm font-medium text-gray-900 mb-1">
+      <label htmlFor="patient-search" className="block text-sm font-medium text-gray-900 mb-1">
         Search Existing Patient
       </label>
       <div className="relative">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
+            id="patient-search"
             type="text"
             placeholder={selectedPatient ? selectedPatient.name : 'Type to search patients...'}
             value={searchQuery}
@@ -121,8 +122,9 @@ function PatientSearchDropdown({
 
         {isOpen && (
           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-            <div
-              className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-teal-600 font-medium border-b"
+            <button
+              type="button"
+              className="w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 text-teal-600 font-medium border-b"
               onClick={() => {
                 onSelect(null);
                 setSearchQuery('');
@@ -130,28 +132,32 @@ function PatientSearchDropdown({
               }}
             >
               + New Patient (enter details below)
-            </div>
-            {loading && patients.length === 0 ? (
-              <div className="px-4 py-2 text-gray-500">Loading...</div>
-            ) : patients.length > 0 ? (
-              <>
-                {patients.map((patient) => (
-                  <div
-                    key={patient._id}
-                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                      selectedPatient?._id === patient._id ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => {
-                      onSelect(patient);
-                      setSearchQuery('');
-                      setIsOpen(false);
-                    }}
-                  >
-                    <div className="font-medium text-gray-900">{patient.name}</div>
-                    <div className="text-sm text-gray-500">{patient.phone} • {patient.email}</div>
-                  </div>
-                ))}
-                {hasMore && (
+            </button>
+            {(() => {
+              if (loading && patients.length === 0) {
+                return <div className="px-4 py-2 text-gray-500">Loading...</div>;
+              }
+              if (patients.length > 0) {
+                return (
+                  <>
+                    {patients.map((patient) => (
+                      <button
+                        type="button"
+                        key={patient._id}
+                        className={`w-full text-left px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                          selectedPatient?._id === patient._id ? 'bg-blue-50' : ''
+                        }`}
+                        onClick={() => {
+                          onSelect(patient);
+                          setSearchQuery('');
+                          setIsOpen(false);
+                        }}
+                      >
+                        <div className="font-medium text-gray-900">{patient.name}</div>
+                        <div className="text-sm text-gray-500">{patient.phone} • {patient.email}</div>
+                      </button>
+                    ))}
+                    {hasMore && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -164,10 +170,11 @@ function PatientSearchDropdown({
                     {loading ? 'Loading...' : `Load More (${patients.length} of ${total})`}
                   </button>
                 )}
-              </>
-            ) : (
-              <div className="px-4 py-2 text-gray-500">No patients found</div>
-            )}
+                  </>
+                );
+              }
+              return <div className="px-4 py-2 text-gray-500">No patients found</div>;
+            })()}
           </div>
         )}
       </div>
@@ -181,6 +188,7 @@ function PatientSearchDropdown({
 }
 
 interface BillItem {
+  id: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -207,11 +215,10 @@ export default function BillForm() {
     dateOfBirth: '',
   });
   const [formData, setFormData] = useState({
-    items: [{ description: '', quantity: 0, unitPrice: 0 }] as BillItem[],
+    items: [{ id: crypto.randomUUID(), description: '', quantity: 0, unitPrice: 0 }] as BillItem[],
     tax: 0,
     discount: 0,
     notes: '',
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
   const handlePatientSelect = (patient: Patient | null) => {
@@ -242,7 +249,7 @@ export default function BillForm() {
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { description: '', quantity: 1, unitPrice: 0 }],
+      items: [...formData.items, { id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0 }],
     });
   };
 
@@ -387,7 +394,7 @@ export default function BillForm() {
 
         <div className="space-y-4">
           {formData.items.map((item, index) => (
-            <div key={index} className="flex gap-4 items-end">
+            <div key={item.id} className="flex gap-4 items-end">
               <div className="flex-1">
                 <Input
                   label={index === 0 ? 'Description' : undefined}
@@ -403,7 +410,7 @@ export default function BillForm() {
                   type="number"
                   min="1"
                   value={item.quantity || ''}
-                  onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                  onChange={(e) => updateItem(index, 'quantity', Number.parseInt(e.target.value) || 0)}
                   required
                 />
               </div>
@@ -414,7 +421,7 @@ export default function BillForm() {
                   min="0"
                   step="0.01"
                   value={item.unitPrice || ''}
-                  onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => updateItem(index, 'unitPrice', Number.parseFloat(e.target.value) || 0)}
                   required
                 />
               </div>
@@ -442,14 +449,14 @@ export default function BillForm() {
 
       <Card>
         <h2 className="text-lg font-semibold mb-4 text-gray-900">Additional Details</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Tax Amount"
             type="number"
             min="0"
             step="0.01"
             value={formData.tax || ''}
-            onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
+            onChange={(e) => setFormData({ ...formData, tax: Number.parseFloat(e.target.value) || 0 })}
           />
           <Input
             label="Discount"
@@ -457,19 +464,13 @@ export default function BillForm() {
             min="0"
             step="0.01"
             value={formData.discount || ''}
-            onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-          />
-          <Input
-            label="Due Date"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            required
+            onChange={(e) => setFormData({ ...formData, discount: Number.parseFloat(e.target.value) || 0 })}
           />
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-900 mb-1">Notes</label>
+          <label htmlFor="bill-notes" className="block text-sm font-medium text-gray-900 mb-1">Notes</label>
           <textarea
+            id="bill-notes"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
             rows={3}
             placeholder="Enter additional notes (optional)"

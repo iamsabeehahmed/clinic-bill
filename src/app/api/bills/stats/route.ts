@@ -22,7 +22,7 @@ export async function GET() {
       monthlyRevenueResult,
       lastMonthRevenueResult,
       todayBills,
-      pendingAmountResult,
+      todayRevenueResult,
       totalPaidAmountResult,
       totalPatients,
       monthlyBills,
@@ -46,10 +46,10 @@ export async function GET() {
         { $group: { _id: null, total: { $sum: '$paidAmount' } } }
       ]),
       Bill.countDocuments({ createdAt: { $gte: today } }),
-      // Pending amount (total owed - paid)
+      // Today's collection
       Bill.aggregate([
-        { $match: { status: { $in: ['pending', 'partial'] } } },
-        { $group: { _id: null, total: { $sum: { $subtract: ['$totalAmount', '$paidAmount'] } } } }
+        { $match: { createdAt: { $gte: today } } },
+        { $group: { _id: null, total: { $sum: '$paidAmount' } } }
       ]),
       // Total amount paid across all bills
       Bill.aggregate([
@@ -65,17 +65,23 @@ export async function GET() {
     const totalRevenue = totalRevenueResult[0]?.total || 0;
     const monthlyRevenue = monthlyRevenueResult[0]?.total || 0;
     const lastMonthRevenue = lastMonthRevenueResult[0]?.total || 0;
-    const pendingAmount = pendingAmountResult[0]?.total || 0;
+    const todayRevenue = todayRevenueResult[0]?.total || 0;
     const totalPaidAmount = totalPaidAmountResult[0]?.total || 0;
 
     // Calculate percentage changes
-    const revenueChange = lastMonthRevenue > 0
-      ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue * 100).toFixed(1)
-      : monthlyRevenue > 0 ? '100' : '0';
+    let revenueChange = 0;
+    if (lastMonthRevenue > 0) {
+      revenueChange = Number.parseFloat(((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue * 100).toFixed(1));
+    } else if (monthlyRevenue > 0) {
+      revenueChange = 100;
+    }
 
-    const billsChange = lastMonthBills > 0
-      ? ((monthlyBills - lastMonthBills) / lastMonthBills * 100).toFixed(1)
-      : monthlyBills > 0 ? '100' : '0';
+    let billsChange = 0;
+    if (lastMonthBills > 0) {
+      billsChange = Number.parseFloat(((monthlyBills - lastMonthBills) / lastMonthBills * 100).toFixed(1));
+    } else if (monthlyBills > 0) {
+      billsChange = 100;
+    }
 
     return NextResponse.json({
       totalBills,
@@ -85,15 +91,16 @@ export async function GET() {
       monthlyRevenue,
       lastMonthRevenue,
       todayBills,
-      pendingAmount,
+      todayRevenue,
       totalPaidAmount,
       totalPatients,
       monthlyBills,
       lastMonthBills,
-      revenueChange: parseFloat(revenueChange as string),
-      billsChange: parseFloat(billsChange as string),
+      revenueChange,
+      billsChange,
     });
   } catch (error) {
+    console.error('Error fetching stats:', error);
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }
