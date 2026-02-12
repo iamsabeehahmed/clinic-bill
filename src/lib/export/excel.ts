@@ -60,6 +60,5 @@ export const billColumns: ExportColumn[] = [
   { header: 'Paid Amount', key: 'paidAmount', width: 12 },
   { header: 'Balance', key: 'balance', width: 12 },
   { header: 'Status', key: 'status', width: 10 },
-  { header: 'Due Date', key: 'dueDate', width: 12 },
   { header: 'Created Date', key: 'createdAt', width: 12 },
 ];

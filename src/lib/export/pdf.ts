@@ -146,6 +146,5 @@ export const billPDFColumns: PDFColumn[] = [
   { header: 'Paid', key: 'paidAmount', width: 20 },
   { header: 'Balance', key: 'balance', width: 20 },
   { header: 'Status', key: 'status', width: 18 },
-  { header: 'Due Date', key: 'dueDate', width: 22 },
   { header: 'Created', key: 'createdAt', width: 22 },
 ];

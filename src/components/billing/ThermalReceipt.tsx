@@ -64,10 +64,6 @@ const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
             <span>Date:</span>
             <span>{format(new Date(bill.createdAt), 'dd/MM/yyyy HH:mm')}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#000000' }}>
-            <span>Due:</span>
-            <span>{format(new Date(bill.dueDate), 'dd/MM/yyyy')}</span>
-          </div>
         </div>
 
         {/* Patient Info */}

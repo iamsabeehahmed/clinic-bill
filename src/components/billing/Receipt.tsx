@@ -43,7 +43,6 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ bill }, ref) => {
         <div>
           <p style={{ fontSize: '14px', color: '#000000' }}><strong>Bill No:</strong> {bill.billNumber}</p>
           <p style={{ fontSize: '14px', color: '#000000' }}><strong>Date:</strong> {format(new Date(bill.createdAt), 'MMM dd, yyyy')}</p>
-          <p style={{ fontSize: '14px', color: '#000000' }}><strong>Due Date:</strong> {format(new Date(bill.dueDate), 'MMM dd, yyyy')}</p>
         </div>
         <div className="text-right">
           <p style={{ fontSize: '14px', fontWeight: '600', color: '#000000' }}>Status:</p>

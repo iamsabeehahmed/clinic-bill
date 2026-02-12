@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
         paidAmount: bill.paidAmount,
         balance: bill.totalAmount - bill.paidAmount,
         status: bill.status,
-        dueDate: bill.dueDate?.toISOString().split('T')[0] || '',
         createdAt: bill.createdAt?.toISOString().split('T')[0] || '',
       };
     });

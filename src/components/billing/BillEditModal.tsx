@@ -32,7 +32,6 @@ export default function BillEditModal({
     tax: 0,
     discount: 0,
     notes: '',
-    dueDate: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,9 +48,6 @@ export default function BillEditModal({
         tax: bill.tax || 0,
         discount: bill.discount || 0,
         notes: bill.notes || '',
-        dueDate: bill.dueDate
-          ? new Date(bill.dueDate).toISOString().split('T')[0]
-          : '',
       });
       setError('');
     }
@@ -120,7 +116,6 @@ export default function BillEditModal({
           discount: formData.discount,
           totalAmount,
           notes: formData.notes,
-          dueDate: formData.dueDate,
         }),
       });
 
@@ -231,13 +226,6 @@ export default function BillEditModal({
             step="0.01"
             value={formData.discount || ''}
             onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-          />
-          <Input
-            label="Due Date"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            required
           />
         </div>
 

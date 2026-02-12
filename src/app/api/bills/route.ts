@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
       totalAmount,
       status: 'paid',
       paidAmount: totalAmount,
-      dueDate: new Date(),
       payments: [{
         amount: totalAmount,
         method: 'cash',
